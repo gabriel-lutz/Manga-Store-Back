@@ -1,10 +1,11 @@
 import cors from "cors"
 import express from "express"
 import bcrypt from "bcrypt"
+import { v4 as uuidv4 } from 'uuid';
 
 import connection from './database.js'
 
-import signUpSchema from './schemas.js'
+import {signUpSchema , signInSchema} from './schemas.js'
 
 const app = express()
 app.use(cors())
@@ -42,6 +43,54 @@ app.post("/sign-up", async (req,res) =>{
     }catch(e){
         console.log(e)
         res.sendStatus(500)
+    }
+})
+
+app.post("/sign-in", async (req,res)=>{
+    const validation = signInSchema.validate(req.body)
+    if(validation.error){
+        res.sendStatus(400)
+        return
+    }
+    try{
+        const { email, password } = req.body;
+        const result = await connection.query(`
+            SELECT * FROM users
+            WHERE email = $1
+        `,[email])
+
+        const user=result.rows[0]
+        
+        if(user && bcrypt.compareSync(password, user.password)){
+            await connection.query(`
+                DELETE FROM sessions
+                WHERE "userId" = $1
+            `,[user.id])
+
+            const token = uuidv4()
+
+            await connection.query(`
+                INSERT INTO sessions 
+                ("userId", token)
+                VALUES ($1, $2)
+            `, [user.id, token]);
+            
+            const {id,name,email} = user
+            
+            res.send({
+                token,
+                user:{
+                    id,
+                    name,
+                    email
+                }
+            })
+            return
+        }
+        res.sendStatus(401)
+    }catch(e){
+        console.log(e)
+        res.sendStatus(401)
     }
 })
 
