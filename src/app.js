@@ -25,6 +25,7 @@ app.get('/allmangas', async (req,res)=>{
         res.sendStatus(500)
     }
 })
+
 app.post("/sign-up", async (req,res) =>{
     const validation = signUpSchema.validate(req.body)
     
