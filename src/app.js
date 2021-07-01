@@ -116,15 +116,54 @@ app.post("/logout", async (req,res)=>{
         if(!token){
             return res.sendStatus(400)
         }
-        const sessionQuery = await connection.query('SELECT * FROM sessions WHERE token = $1', [token])
+        const sessionQuery = await connection.query(`
+            SELECT * 
+            FROM sessions 
+            WHERE token = $1`
+            , [token])
         
         if(!sessionQuery.rows.length){
             return res.send(401)
         }
 
-        await connection.query("DELETE FROM sessions WHERE token = $1", [token] )
+        await connection.query(`
+            DELETE FROM sessions 
+            WHERE token = $1`
+            , [token])
         res.sendStatus(200)     
 
+    }catch(err){
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
+app.post("/addproduct/:productId", async (req,res)=>{
+    try{
+        const productId = req.params.productId
+        const token = req.headers.authorization
+
+        if(!token){
+            return res.sendStatus(400)
+        }
+
+        const sessionQuery = await connection.query(`
+            SELECT * 
+            FROM sessions 
+            WHERE token = $1`
+            , [token])
+        if(!sessionQuery.rows.length){
+            return res.send(401)
+        }
+
+        await connection.query(`
+            INSERT INTO carts 
+            ("userId", "mangaId", "salesId") 
+            VALUES
+            ($1, $2, null)`
+            , [sessionQuery.rows[0].userId, productId])
+
+        res.sendStatus(200)
     }catch(err){
         console.log(err)
         res.sendStatus(500)
