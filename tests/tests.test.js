@@ -89,7 +89,48 @@ describe("POST /sign-in", ()=>{
     });
 })
 
-afterAll(() =>{
+describe("POST /logout", ()=>{
+    let token;
+    beforeAll(async ()=>{
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const response = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+        token = response.body.token
+    })
+    it("should respond with status 200 when user send a valid token", async () => {
     
+        const response = await supertest(app).post("/logout").send({}).set({Authorization: token});
+    
+        expect(response.status).toEqual(200);
+    });
+    it("should respond with status 400 when user does not send a token", async () => {
+        
+        const response = await supertest(app).post("/logout").send({})
+    
+        expect(response.status).toEqual(400);
+    });
+    it("should respond with status 401 when user send a invalid token", async () => {
+        
+        const response = await supertest(app).post("/logout").send({}).set({Authorization: "token"});
+    
+        expect(response.status).toEqual(401);
+    });
+})
+
+describe("GET /allmangas", ()=>{
+    it("should respond with status 200", async () => {
+        const response = await supertest(app).get("/allmangas")
+    
+        expect(response.status).toEqual(200);
+    });
+})
+
+afterAll(() =>{
+    connection.query("DELETE FROM users WHERE email = 'test@email.com.br'")
     connection.end()
+
 })

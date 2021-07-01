@@ -11,6 +11,21 @@ const app = express()
 app.use(cors())
 app.use(express.json());
 
+app.get('/allmangas', async (req,res)=>{
+    try{
+        const query = await connection.query(`
+        SELECT mangas.*, categories.name AS "categoryName" 
+        FROM mangas
+        JOIN categories 
+        ON categories.id = mangas."categoryId"
+        `)
+        res.send(query.rows).status(200)
+    }catch(err){
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
 app.post("/sign-up", async (req,res) =>{
     const validation = signUpSchema.validate(req.body)
     
@@ -163,6 +178,28 @@ app.delete("/cart-remove:id", async (req,res)=>{
     }catch(e){
         console.log(e)
         res.sendStatus(401)
+    }
+})
+
+app.post("/logout", async (req,res)=>{
+    try{
+        const token = req.headers.authorization
+
+        if(!token){
+            return res.sendStatus(400)
+        }
+        const sessionQuery = await connection.query('SELECT * FROM sessions WHERE token = $1', [token])
+        
+        if(!sessionQuery.rows.length){
+            return res.send(401)
+        }
+
+        await connection.query("DELETE FROM sessions WHERE token = $1", [token] )
+        res.sendStatus(200)     
+
+    }catch(err){
+        console.log(err)
+        res.sendStatus(500)
     }
 })
 
