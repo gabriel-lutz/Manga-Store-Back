@@ -94,4 +94,76 @@ app.post("/sign-in", async (req,res)=>{
     }
 })
 
+app.get("/cart", async (req,res)=>{
+    try{
+        const authorization = req.headers['authorization'];
+        const token = authorization?.replace('Bearer ', '');
+
+        if(!token){
+            res.sendStatus(401)
+            return
+        }
+        const result = await connection.query(`
+            SELECT *
+            FROM sessions
+            WHERE token = $1;
+        `,[token])
+        if(result.rows.length!==1){
+            res.sendStatus(401)
+            return
+        }
+
+        const {userId}= result.rows[0]
+        const cart = await connection.query(`
+            SELECT mangas.*, categories.name as "categoryName", carts.id as "cartId"
+            FROM carts
+            JOIN mangas
+            ON mangas.id = carts."mangaId"
+            JOIN categories
+            ON mangas."categoryId"= categories.id
+            WHERE carts."userId" = $1
+        `,[userId])
+        res.send(cart.rows)
+        return
+    }catch(e){
+        console.log(e)
+        res.sendStatus(401)
+    }
+})
+
+app.delete("/cart-remove:id", async (req,res)=>{
+    try{
+        const authorization = req.headers['authorization'];
+        const token = authorization?.replace('Bearer ', '');
+
+        if(!token){
+            res.sendStatus(401)
+            return
+        }
+      
+        const result = await connection.query(`
+            SELECT *
+            FROM sessions
+            WHERE token = $1;
+        `,[token])
+        if(result.rows.length!==1){
+            res.sendStatus(401)
+            return
+        }
+    
+        const cartId= req.params.id
+        
+        console.log(cartId)
+        await connection.query(`
+            DELETE FROM carts
+            WHERE id = $1
+        `,[cartId])
+        res.sendStatus(200)
+        return
+    }catch(e){
+        console.log(e)
+        res.sendStatus(401)
+    }
+})
+
 export default app
