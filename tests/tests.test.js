@@ -129,15 +129,122 @@ describe("GET /allmangas", ()=>{
     });
 })
 
+<<<<<<< HEAD
+describe("GET /cart", ()=>{
+    beforeEach(async () =>{
+        await connection.query('DELETE FROM users')
+        await connection.query('DELETE FROM sessions')
+        await connection.query('DELETE FROM carts')
+    })
+    it("should respond with status 200", async () => {
+=======
 describe("POST /addproduct/:productId", ()=>{
     let token;
     beforeAll(async ()=>{
+>>>>>>> main
         const body = {
             name:"Test",
             email:"test@email.com.br",
             password:"123456"
         }
         await supertest(app).post("/sign-up").send(body);
+<<<<<<< HEAD
+        const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+        console.log(login.body)
+        const {token} = login.body
+
+        const response = await supertest(app).get("/cart").set('Authorization', `Bearer ${token}`);
+    
+        expect(response.status).toEqual(200);
+    });
+    it("should respond with status 401 when token is incorrect", async () => {
+        
+        const response = await supertest(app).get("/cart").set('Authorization', `Bearer token-incorreto`);
+    
+        expect(response.status).toEqual(401);
+    });
+    it("should respond with status 401 when token not found", async () => {
+        
+        const response = await supertest(app).get("/cart");
+    
+        expect(response.status).toEqual(401);
+    });
+})
+
+describe("DELETE /cart:id", ()=>{
+    beforeEach(async () =>{
+        await connection.query('DELETE FROM users')
+        await connection.query('DELETE FROM sessions')
+        await connection.query('DELETE FROM carts')
+    })
+    it("should respond with status 200", async () => {
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+
+        const {user,token} = login.body
+        await connection.query(`INSERT INTO carts ("userId", "mangaId","salesId") VALUES (${user.id},1,NULL)`)
+        
+        
+
+        const response = await supertest(app).delete(`/cart${user.id}`).set('Authorization', `Bearer ${token}`);
+    
+        expect(response.status).toEqual(200);
+    });
+    it("should respond with status 401 when token is incorrect", async () => {
+        
+        const response = await supertest(app).delete("/cart1").set('Authorization', `Bearer token-incorreto`);
+    
+        expect(response.status).toEqual(401);
+    });
+    it("should respond with status 401 when token not found", async () => {
+        
+        const response = await supertest(app).delete("/cart1");
+    
+        expect(response.status).toEqual(401);
+    });
+})
+
+describe("POST /check-out", ()=>{
+    beforeEach(async () =>{
+        await connection.query('DELETE FROM users')
+        await connection.query('DELETE FROM sessions')
+        await connection.query('DELETE FROM carts')
+        await connection.query('DELETE FROM sales')
+    })
+    it("should respond with status 200", async () => {
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+
+        const {user,token} = login.body
+        await connection.query(`INSERT INTO carts ("userId", "mangaId","salesId") VALUES (${user.id},1,NULL)`)
+        
+        
+
+        const response = await supertest(app).post(`/check-out`).set('Authorization', `Bearer ${token}`);
+    
+        expect(response.status).toEqual(200);
+    });
+    it("should respond with status 401 when token is incorrect", async () => {
+        
+        const response = await supertest(app).post("/check-out").set('Authorization', `Bearer token-incorreto`);
+    
+        expect(response.status).toEqual(401);
+    });
+    it("should respond with status 401 when token not found", async () => {
+        
+        const response = await supertest(app).post("/check-out");
+    
+=======
         const response = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
         token = response.body.token
     })
@@ -155,6 +262,7 @@ describe("POST /addproduct/:productId", ()=>{
 
     it("should respond with status 401 when user doesnt have a valid token", async () => {
         const response = await supertest(app).post("/addproduct/1").set({Authorization: "token"});
+>>>>>>> main
         expect(response.status).toEqual(401);
     });
 })
