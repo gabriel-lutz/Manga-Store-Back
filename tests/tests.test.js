@@ -129,8 +129,38 @@ describe("GET /allmangas", ()=>{
     });
 })
 
+describe("POST /addproduct/:productId", ()=>{
+    let token;
+    beforeAll(async ()=>{
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const response = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+        token = response.body.token
+    })
+
+
+    it("should respond with status 200 when user has a valid token and the product is added to cart", async () => {
+        const response = await supertest(app).post("/addproduct/1").set({Authorization: token});
+        expect(response.status).toEqual(200);
+    });
+
+    it("should respond with status 400 when user doesnt send a token", async () => {
+        const response = await supertest(app).post("/addproduct/1")
+        expect(response.status).toEqual(400);
+    });
+
+    it("should respond with status 401 when user doesnt have a valid token", async () => {
+        const response = await supertest(app).post("/addproduct/1").set({Authorization: "token"});
+        expect(response.status).toEqual(401);
+    });
+})
+
 afterAll(() =>{
-    connection.query("DELETE FROM users WHERE email = 'test@email.com.br'")
+    connection.query("DELETE FROM users WHERE email = test@email.com.br")
     connection.end()
 
 })
