@@ -106,7 +106,7 @@ app.post("/sign-in", async (req,res)=>{
         res.sendStatus(401)
     }catch(e){
         console.log(e)
-        res.sendStatus(401)
+        res.sendStatus(500)
     }
 })
 
@@ -144,7 +144,7 @@ app.get("/cart", async (req,res)=>{
         return
     }catch(e){
         console.log(e)
-        res.sendStatus(401)
+        res.sendStatus(500)
     }
 })
 
@@ -178,7 +178,7 @@ app.delete("/cart:id", async (req,res)=>{
         return
     }catch(e){
         console.log(e)
-        res.sendStatus(401)
+        res.sendStatus(500)
     }
 })
 
@@ -237,7 +237,7 @@ app.post("/check-out", async (req,res)=>{
         res.sendStatus(200)
     }catch(e){
         console.log(e)
-        res.sendStatus(401)
+        res.sendStatus(500)
     }
 })
 

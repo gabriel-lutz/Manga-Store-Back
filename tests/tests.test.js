@@ -129,7 +129,6 @@ describe("GET /allmangas", ()=>{
     });
 })
 
-<<<<<<< HEAD
 describe("GET /cart", ()=>{
     beforeEach(async () =>{
         await connection.query('DELETE FROM users')
@@ -137,20 +136,13 @@ describe("GET /cart", ()=>{
         await connection.query('DELETE FROM carts')
     })
     it("should respond with status 200", async () => {
-=======
-describe("POST /addproduct/:productId", ()=>{
-    let token;
-    beforeAll(async ()=>{
->>>>>>> main
         const body = {
             name:"Test",
             email:"test@email.com.br",
             password:"123456"
         }
         await supertest(app).post("/sign-up").send(body);
-<<<<<<< HEAD
         const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
-        console.log(login.body)
         const {token} = login.body
 
         const response = await supertest(app).get("/cart").set('Authorization', `Bearer ${token}`);
@@ -188,9 +180,6 @@ describe("DELETE /cart:id", ()=>{
 
         const {user,token} = login.body
         await connection.query(`INSERT INTO carts ("userId", "mangaId","salesId") VALUES (${user.id},1,NULL)`)
-        
-        
-
         const response = await supertest(app).delete(`/cart${user.id}`).set('Authorization', `Bearer ${token}`);
     
         expect(response.status).toEqual(200);
@@ -243,8 +232,19 @@ describe("POST /check-out", ()=>{
     it("should respond with status 401 when token not found", async () => {
         
         const response = await supertest(app).post("/check-out");
-    
-=======
+        expect(response.status).toEqual(401);
+    });
+})
+
+describe("POST /addproduct/:productId", ()=>{
+    let token;
+    beforeAll(async ()=>{
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
         const response = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
         token = response.body.token
     })
@@ -262,7 +262,7 @@ describe("POST /check-out", ()=>{
 
     it("should respond with status 401 when user doesnt have a valid token", async () => {
         const response = await supertest(app).post("/addproduct/1").set({Authorization: "token"});
->>>>>>> main
+
         expect(response.status).toEqual(401);
     });
 })
