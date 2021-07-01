@@ -121,7 +121,16 @@ describe("POST /logout", ()=>{
     });
 })
 
-afterAll(() =>{
+describe("GET /allmangas", ()=>{
+    it("should respond with status 200", async () => {
+        const response = await supertest(app).get("/allmangas")
     
+        expect(response.status).toEqual(200);
+    });
+})
+
+afterAll(() =>{
+    connection.query("DELETE FROM users WHERE email = 'test@email.com.br'")
     connection.end()
+
 })
