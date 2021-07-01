@@ -2,6 +2,7 @@ import cors from "cors"
 import express from "express"
 import bcrypt from "bcrypt"
 import { v4 as uuidv4 } from 'uuid';
+import dayjs from "dayjs"
 
 import connection from './database.js'
 
@@ -129,14 +130,15 @@ app.get("/cart", async (req,res)=>{
         }
 
         const {userId}= result.rows[0]
+
         const cart = await connection.query(`
-            SELECT mangas.*, categories.name as "categoryName", carts.id as "cartId"
+            SELECT mangas.*, categories.name AS "categoryName", carts.id AS "cartId"
             FROM carts
             JOIN mangas
             ON mangas.id = carts."mangaId"
             JOIN categories
             ON mangas."categoryId"= categories.id
-            WHERE carts."userId" = $1
+            WHERE carts."userId" = $1 AND "salesId" IS NULL;
         `,[userId])
         res.send(cart.rows)
         return
@@ -146,7 +148,7 @@ app.get("/cart", async (req,res)=>{
     }
 })
 
-app.delete("/cart-remove:id", async (req,res)=>{
+app.delete("/cart:id", async (req,res)=>{
     try{
         const authorization = req.headers['authorization'];
         const token = authorization?.replace('Bearer ', '');
@@ -168,13 +170,71 @@ app.delete("/cart-remove:id", async (req,res)=>{
     
         const cartId= req.params.id
         
-        console.log(cartId)
         await connection.query(`
             DELETE FROM carts
             WHERE id = $1
         `,[cartId])
         res.sendStatus(200)
         return
+    }catch(e){
+        console.log(e)
+        res.sendStatus(401)
+    }
+})
+
+app.post("/check-out", async (req,res)=>{
+    try{
+        const authorization = req.headers['authorization'];
+        const token = authorization?.replace('Bearer ', '');
+
+        if(!token){
+            res.sendStatus(401)
+            return
+        }
+
+        const result = await connection.query(`
+            SELECT *
+            FROM sessions
+            WHERE token = $1;
+        `,[token])
+
+        if(result.rows.length!==1){
+            res.sendStatus(401)
+            return
+        }
+        
+        const {userId}= result.rows[0]
+
+        const cartItens= await connection.query(`
+            SELECT carts.*, mangas.price
+            FROM carts
+            JOIN mangas
+            ON mangas.id = carts."mangaId"
+            WHERE "userId" = $1 AND "salesId" IS NULL;
+        `,[userId])
+
+        const total = cartItens.rows.reduce((t,i)=>t+i.price,0)
+
+        await connection.query(`
+            INSERT INTO sales 
+            ("userId", date, total)
+            VALUES ($1, $2, $3)
+        `, [userId, dayjs(), total]);
+
+        const userSales=await connection.query(`
+            SELECT * FROM sales 
+            WHERE "userId" = $1;
+        `, [userId]);
+
+        const saleId = userSales.rows[userSales.rows.length-1].id
+
+        await connection.query(`
+            UPDATE carts
+            SET "salesId" = $1
+            WHERE "salesId" IS NULL;
+        `, [saleId]);
+        
+        res.sendStatus(200)
     }catch(e){
         console.log(e)
         res.sendStatus(401)
