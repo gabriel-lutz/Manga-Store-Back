@@ -12,16 +12,16 @@ const app = express()
 app.use(cors())
 app.use(express.json());
 
-app.get('/mangas:id', async (req,res)=>{
+app.get('/mangas:category', async (req,res)=>{
     try{
-        if(req.params.id!=="all"){
+        if(req.params.category!=="all"){
             const query = await connection.query(`
                 SELECT mangas.*, categories.name AS "categoryName" 
                 FROM mangas
                 JOIN categories 
                 ON categories.id = mangas."categoryId"
                 WHERE mangas."categoryId" = $1;
-            `,[req.params.id])
+            `,[req.params.category])
             return res.send(query.rows).status(200)
         }
         const query = await connection.query(`

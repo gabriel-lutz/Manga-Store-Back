@@ -121,9 +121,9 @@ describe("POST /logout", ()=>{
     });
 })
 
-describe("GET /allmangas", ()=>{
+describe("GET /mangas:category", ()=>{
     it("should respond with status 200", async () => {
-        const response = await supertest(app).get("/allmangas")
+        const response = await supertest(app).get("/mangasall")
     
         expect(response.status).toEqual(200);
     });
