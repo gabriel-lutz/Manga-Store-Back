@@ -209,10 +209,18 @@ app.post("/check-out", async (req,res)=>{
     try{
         const authorization = req.headers['authorization'];
         const token = authorization?.replace('Bearer ', '');
+        const checkoutData = req.body.checkoutData
 
+        if(!checkoutData) return res.sendStatus(400)
+
+        const {deliverName, deliverPhoneNumber, deliverAddress, creditCardNumber} = checkoutData
+
+        if(!deliverName || !deliverPhoneNumber || !deliverAddress || !creditCardNumber){
+            return res.sendStatus(400)
+        }
+        
         if(!token){
-            res.sendStatus(401)
-            return
+            return res.sendStatus(400)
         }
 
         const result = await connection.query(`
@@ -240,9 +248,9 @@ app.post("/check-out", async (req,res)=>{
 
         await connection.query(`
             INSERT INTO sales 
-            ("userId", date, total)
-            VALUES ($1, $2, $3)
-        `, [userId, dayjs(), total]);
+            ("userId", date, total, "deliverName", "deliverPhoneNumber", "deliverAddress", "creditCardNumber")
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, [userId, dayjs(), total, deliverName, deliverPhoneNumber, deliverAddress, creditCardNumber]);
 
         const userSales=await connection.query(`
             SELECT * FROM sales 

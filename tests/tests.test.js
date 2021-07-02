@@ -217,22 +217,55 @@ describe("POST /check-out", ()=>{
         const {user,token} = login.body
         await connection.query(`INSERT INTO carts ("userId", "mangaId","salesId") VALUES (${user.id},1,NULL)`)
         
-        
+        const checkoutData={
+            deliverName: "test", 
+            deliverPhoneNumber: "123456789", 
+            deliverAddress: "test avenue", 
+            creditCardNumber: "12345678912"
+        }
 
-        const response = await supertest(app).post(`/check-out`).set('Authorization', `Bearer ${token}`);
+        const response = await supertest(app).post(`/check-out`).send({checkoutData}).set('Authorization', `Bearer ${token}`);
     
         expect(response.status).toEqual(200);
     });
-    it("should respond with status 401 when token is incorrect", async () => {
+
+    it("should respond with status 400 when not sending a correct body", async () => {
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+
+        const {user,token} = login.body
+        await connection.query(`INSERT INTO carts ("userId", "mangaId","salesId") VALUES (${user.id},1,NULL)`)
         
-        const response = await supertest(app).post("/check-out").set('Authorization', `Bearer token-incorreto`);
+        const checkoutData={
+            data: "Messed_up_data"
+        }
+
+        const response = await supertest(app).post(`/check-out`).send({checkoutData}).set('Authorization', `Bearer ${token}`);
+    
+        expect(response.status).toEqual(400);
+    });
+
+    it("should respond with status 401 when token is incorrect", async () => {
+        const checkoutData={
+            deliverName: "test", 
+            deliverPhoneNumber: "123456789", 
+            deliverAddress: "test avenue", 
+            creditCardNumber: "12345678912"
+        }
+        
+        const response = await supertest(app).post("/check-out").send({checkoutData}).set('Authorization', `Bearer token-incorreto`);
     
         expect(response.status).toEqual(401);
     });
-    it("should respond with status 401 when token not found", async () => {
+    it("should respond with status 400 when token not found", async () => {
         
         const response = await supertest(app).post("/check-out");
-        expect(response.status).toEqual(401);
+        expect(response.status).toEqual(400);
     });
 })
 
@@ -268,7 +301,7 @@ describe("POST /addproduct/:productId", ()=>{
 })
 
 afterAll(() =>{
-    connection.query("DELETE FROM users WHERE email = test@email.com.br")
+    connection.query("DELETE FROM users WHERE email = 'test@email.com.br'")
     connection.end()
 
 })
