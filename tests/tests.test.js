@@ -269,6 +269,59 @@ describe("POST /check-out", ()=>{
     });
 })
 
+describe("GET /history", ()=>{
+    beforeEach(async () =>{
+        await connection.query('DELETE FROM users')
+        await connection.query('DELETE FROM sessions')
+        await connection.query('DELETE FROM carts')
+        await connection.query('DELETE FROM sales')
+    })
+    it("should respond with status 200 when sending a valid token", async () => {
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+
+        const {user,token} = login.body
+        
+        const response = await supertest(app).get(`/history`).set('Authorization', `Bearer ${token}`);
+    
+        expect(response.status).toEqual(200);
+    });
+
+    it("should respond with status 400 when not sending a token", async () => {
+        const body = {
+            name:"Test",
+            email:"test@email.com.br",
+            password:"123456"
+        }
+        await supertest(app).post("/sign-up").send(body);
+        const login = await supertest(app).post("/sign-in").send({ email: body.email, password: body.password });
+
+        const {user,token} = login.body
+
+        const response = await supertest(app).get(`/history`)
+    
+        expect(response.status).toEqual(400);
+    });
+
+    it("should respond with status 401 when token is incorrect", async () => {
+        const checkoutData={
+            deliverName: "test", 
+            deliverPhoneNumber: "123456789", 
+            deliverAddress: "test avenue", 
+            creditCardNumber: "12345678912"
+        }
+        
+        const response = await supertest(app).get("/history").set('Authorization', `Bearer token-incorreto`);
+    
+        expect(response.status).toEqual(401);
+    });
+})
+
 describe("POST /addproduct/:productId", ()=>{
     let token;
     beforeAll(async ()=>{
@@ -300,8 +353,8 @@ describe("POST /addproduct/:productId", ()=>{
     });
 })
 
-afterAll(() =>{
-    connection.query("DELETE FROM users WHERE email = 'test@email.com.br'")
+afterAll(async () =>{
+    await connection.query("DELETE FROM users WHERE email = 'test@email.com.br'")
     connection.end()
 
 })
