@@ -12,6 +12,58 @@ const app = express()
 app.use(cors())
 app.use(express.json());
 
+app.get("/history", async(req,res)=>{
+    try{
+        const authorization = req.headers['authorization'];
+        const token = authorization?.replace('Bearer ', '');
+
+        if(!token){
+            res.sendStatus(400)
+            return
+        }
+        const result = await connection.query(`
+            SELECT *
+            FROM sessions
+            WHERE token = $1;
+        `,[token])
+        if(result.rows.length!==1){
+            res.sendStatus(401)
+            return
+        }
+
+        const {userId}= result.rows[0]
+
+        const cart = await connection.query(`
+            SELECT mangas.*, categories.name AS "categoryName", carts.id AS "cartId", sales."id" AS "salesId", sales.date as "saleDate", sales.total
+            FROM carts
+            JOIN mangas
+            ON mangas.id = carts."mangaId"
+            JOIN categories
+            ON mangas."categoryId"= categories.id
+            JOIN sales
+            ON carts."salesId" = sales.id
+            WHERE carts."userId" = $1 AND carts."salesId" IS NOT NULL;
+            `,[userId])
+
+        let auxresult = []    
+
+        cart.rows.forEach(c=>{
+            if (auxresult[c.salesId]){
+                auxresult[c.salesId].push(c)
+            }else{
+                auxresult[c.salesId] = [c]
+            }
+        })
+
+        auxresult = auxresult.filter(a => a !== null)
+
+        res.send(auxresult).status(200)
+    }catch(err){
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
 app.get('/mangas:category', async (req,res)=>{
     try{
         if(req.params.category!=="all"){
